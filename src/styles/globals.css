@@ -12,6 +12,7 @@
 @import '@radix-ui/colors/black-alpha.css';
 @import '@radix-ui/colors/mauve.css';
 @import '@radix-ui/colors/violet.css';
+@import '@radix-ui/colors/pink.css';
 @import '@radix-ui/colors/slate.css';
 
 
@@ -30,13 +31,19 @@
 }
 
 body {
-  color: rgb(var(--foreground-rgb));
   background: linear-gradient(
       to bottom,
       transparent,
       rgb(var(--background-end-rgb))
     )
     rgb(var(--background-start-rgb));
+  background-color: var(--pink-1);
+  color: var(--gray-1);
+}
+
+select, textarea {
+  color: var(--pink-11);
+  font-weight: 500;
 }
 
 @layer utilities {
@@ -103,17 +110,7 @@ input {
   font-weight: 500;
   height: 35px;
 }
-.Button.floating {
-  background-color: white;
-  color: var(--violet-11);
-  box-shadow: 0 2px 10px var(--black-a7);
-}
-.Button.floating:hover {
-  background-color: var(--mauve-3);
-}
-.Button.floating:focus {
-  box-shadow: 0 0 0 2px black;
-}
+
 .Button.green {
   background-color: var(--green-4);
   color: var(--green-11);
@@ -136,18 +133,30 @@ input {
   box-shadow: 0 0 0 2px var(--red-7);
 }
 
-
 .Button.violet {
-  background-color: var(--violet-2);
-  color: var(--violet-11);
-  box-shadow: inset 0 0 0 1px var(--violet-7);
+  background-color: var(--pink-2);
+  color: var(--pink-11);
+  box-shadow: inset 0 0 0 1px var(--pink-7);
 }
 .Button.violet:hover {
-  box-shadow: inset 0 0 0 1px var(--violet-8);
-  background-color: var(--violet-5);
+  box-shadow: inset 0 0 0 1px var(--pink-8);
+  background-color: var(--pink-5);
 }
 .Button.violet:focus {
-  box-shadow: 0 0 0 2px var(--violet-7);
+  box-shadow: 0 0 0 2px var(--pink-7);
+}
+
+.Button.violet-primary {
+  background-color: var(--pink-7);
+  color: var(--pink-1);
+  box-shadow: inset 0 0 0 1px var(--pink-7);
+}
+.Button.violet-primary:hover {
+  box-shadow: inset 0 0 0 1px var(--pink-8);
+  background-color: var(--pink-9);
+}
+.Button.violet-primary:focus {
+  box-shadow: 0 0 0 2px var(--pink-7);
 }
 
 
@@ -360,4 +369,8 @@ input {
 }
 .Button.green:focus {
   box-shadow: 0 0 0 2px var(--green-8);
+}
+
+.custom-class-card {
+  background-color: var(--pink-7);
 }

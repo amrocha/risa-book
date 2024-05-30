@@ -7,6 +7,7 @@ import { Cross2Icon, PlusCircledIcon } from "@radix-ui/react-icons";
 import { useState, useRef, useEffect, useMemo } from "react";
 import imageBlobReduce from "image-blob-reduce";
 import { debounce } from "lodash";
+import { useRouter } from "next/router";
 
 const reducer = imageBlobReduce();
 
@@ -88,6 +89,8 @@ export default function Home() {
 
   const [images, setImages] = useState([]);
 
+  const router = useRouter();
+
   useEffect(() => {
     console.log("Calculating images");
 
@@ -127,6 +130,7 @@ export default function Home() {
   }, [data]);
 
   const [popupOpen, setPopupOpen] = useState(false);
+  const [importDataPopupOpen, setImportDataPopupOpen] = useState(false);
 
   console.log("images", images);
 
@@ -196,47 +200,148 @@ export default function Home() {
     setData(dataClone);
   }, 500);
 
+  const handleImportData = (newData) => {
+    const dataJson = JSON.parse(newData);
+
+    setData(dataJson.data);
+
+    const images = dataJson.images;
+
+    for (const [key, value] of Object.entries(images)) {
+      console.log("Saving in storage!", key, value);
+      localStorage.setItem(key, value);
+    }
+
+    router.reload();
+  };
+
+  const handleExportData = async () => {
+    console.log("keys", images);
+
+    const output = {
+      data: data,
+      images: images,
+    };
+
+    await navigator.clipboard.writeText(JSON.stringify(output));
+    console.log(output);
+  };
+
   return (
     <main
-      className={`flex min-h-screen flex-col items-center justify-between p-24 ${inter.className} gap-4`}
+      className={`min-h-screen ${inter.className} flex flex-col items-center justify-between xl:p-24 gap-4 m-4`}
     >
-      <AddBookButton
-        handleAddBook={handleAddBook}
-        popupOpen={popupOpen}
-        setPopupOpen={setPopupOpen}
-      />
+      {/* <div className="flex flex-col items-center justify-between xl:p-24 gap-4"> */}
+      <div className="flex flex-col items-center w-32 gap-1">
+        <AddBookButton
+          handleAddBook={handleAddBook}
+          popupOpen={popupOpen}
+          setPopupOpen={setPopupOpen}
+        />
+        <button
+          className={`Button violet-primary flex-auto`}
+          onClick={handleExportData}
+        >
+          Export Data
+        </button>
+
+        <ImportDataButton
+          handleImportData={handleImportData}
+          popupOpen={importDataPopupOpen}
+          setPopupOpen={setImportDataPopupOpen}
+        />
+      </div>
       {Object.entries(data).map(([place, genres]) => {
         return (
           <div
             key={place}
-            className="border rounded-3xl bg-slate-50 p-4 w-full flex flex-col"
+            className="border rounded-3xl custom-class-card p-4 w-full flex flex-col"
           >
             <div>
-              <h2 className="text-4xl">{place}</h2>
+              <h2 className="text-4xl font-bold">{place}</h2>
             </div>
             <div className="flex flex-col">
               {Object.entries(genres).map(([genre, books]) => {
                 return (
                   <div key={genre}>
-                    <div className="text-2xl w-full border-b">{genre}</div>
+                    <div className="text-2xl font-bold w-full border-b border-slate-50">
+                      {genre}
+                    </div>
                     <div className="px-4">
                       {Object.entries(books).map(
                         ([id, { title, imageKey, genre, notes, place }]) => {
                           return (
                             <div
-                              className="flex gap-4 py-4 items-center"
+                              className="flex gap-4 py-4 items-center flex-col sm:flex-row"
                               key={id}
                             >
-                              {images[imageKey] && (
-                                <Image
-                                  src={images[imageKey]}
-                                  width={50}
-                                  height={100}
-                                  alt={title}
-                                />
-                              )}
-                              <div className="flex flex-col">
-                                <span className="text-xl">{title}</span>
+                              <div className="flex items-center gap-4 w-full sm:w-auto">
+                                <div className="flex-initial flex-shrink-0">
+                                  {images[imageKey] && (
+                                    <Image
+                                      src={images[imageKey]}
+                                      width={100}
+                                      height={200}
+                                      alt={title}
+                                    />
+                                  )}
+                                </div>
+                                <div className="flex-auto flex flex-col gap-4">
+                                  <div className="text-xl font-bold">
+                                    {title}
+                                  </div>
+
+                                  <div className="flex flex-col gap-4 flex-auto">
+                                    <select
+                                      className="p-2 rounded-md border-2 border-pink-100"
+                                      name="場所"
+                                      id="場所"
+                                      value={place}
+                                      onChange={(event) => {
+                                        handleChangePlace(
+                                          event.target.value,
+                                          place,
+                                          genre,
+                                          id
+                                        );
+                                      }}
+                                    >
+                                      {allPlaces.map((place) => {
+                                        return (
+                                          <option key={place} value={place}>
+                                            {place}
+                                          </option>
+                                        );
+                                      })}
+                                    </select>
+
+                                    <select
+                                      name="ジャンル"
+                                      id="ジャンル"
+                                      className="p-2 rounded-md border-2 border-pink-100"
+                                      value={genre}
+                                      onChange={(event) => {
+                                        handleChangeGenre(
+                                          event.target.value,
+                                          genre,
+                                          place,
+                                          id
+                                        );
+                                      }}
+                                    >
+                                      {allGenres.map((genre) => {
+                                        return (
+                                          <option key={genre} value={genre}>
+                                            {genre}
+                                          </option>
+                                        );
+                                      })}
+                                    </select>
+                                  </div>
+                                </div>
+                              </div>
+
+                              <div className="flex flex-col w-full sm:w-auto">
                                 <textarea
                                   name="notes"
                                   rows="5"
@@ -254,56 +359,13 @@ export default function Home() {
                                   {notes}
                                 </textarea>
                               </div>
-                              <div className="flex flex-col gap-4">
-                                <select
-                                  className="p-2 rounded-md border-2 border-blue-200"
-                                  name="場所"
-                                  id="場所"
-                                  value={place}
-                                  onChange={(event) => {
-                                    handleChangePlace(
-                                      event.target.value,
-                                      place,
-                                      genre,
-                                      id
-                                    );
-                                  }}
-                                >
-                                  {allPlaces.map((place) => {
-                                    return (
-                                      <option key={place} value={place}>
-                                        {place}
-                                      </option>
-                                    );
-                                  })}
-                                </select>
+                              <div className="flex flex-col gap-4 w-full sm:w-auto">
+                                <button className="Button violet cursor-pointer">
+                                  編集
+                                </button>
+                              </div>
 
-                                <select
-                                  name="ジャンル"
-                                  id="ジャンル"
-                                  className="p-2 rounded-md border-2 border-blue-200"
-                                  value={genre}
-                                  onChange={(event) => {
-                                    handleChangeGenre(
-                                      event.target.value,
-                                      genre,
-                                      place,
-                                      id
-                                    );
-                                  }}
-                                >
-                                  {allGenres.map((genre) => {
-                                    return (
-                                      <option key={genre} value={genre}>
-                                        {genre}
-                                      </option>
-                                    );
-                                  })}
-                                </select>
-                              </div>
-                              <div className="flex flex-col gap-4">
-                                <button className="Button violet cursor-pointer">編集</button>
-                              </div>
+                              <div className="border w-full sm:hidden"></div>
                             </div>
                           );
                         }
@@ -316,11 +378,96 @@ export default function Home() {
           </div>
         );
       })}
+      {/* </div> */}
     </main>
   );
 }
 
-function AddBookButton({ handleAddBook, popupOpen, setPopupOpen }) {
+function ImportDataButton({ handleImportData, popupOpen, setPopupOpen }) {
+  const [data, setData] = useState();
+
+  const [showToast, setShowToast] = useState(false);
+  const timerRef = useRef(0);
+
+  const showError = () => {
+    setShowToast(true);
+    window.clearTimeout(timerRef.current);
+    timerRef.current = window.setTimeout(() => {
+      setShowToast(false);
+    }, 2000);
+  };
+
+  return (
+    <div>
+      <Dialog.Root open={popupOpen}>
+        <button
+          className={`Button violet-primary flex-auto`}
+          onClick={() => {
+            setPopupOpen(true);
+          }}
+        >
+          Import Data
+        </button>
+        <Dialog.Portal>
+          <Dialog.Overlay className="DialogOverlay" />
+          <Dialog.Content className="DialogContent">
+            <Dialog.Title className="DialogTitle">
+              <h3 className="text-2xl">Import Data</h3>
+            </Dialog.Title>
+            <fieldset className="Fieldset">
+              <label className="Label" htmlFor="title">
+                Data
+              </label>
+              <textarea
+                className="Input"
+                id="data"
+                onChange={(event) => {
+                  setData(event.target.value);
+                }}
+              />
+            </fieldset>
+            <div
+              style={{
+                display: "flex",
+                marginTop: 25,
+                justifyContent: "flex-end",
+              }}
+            >
+              <button
+                className="Button green"
+                onClick={() => {
+                  if (data) {
+                    handleImportData(data);
+                    setData(undefined);
+                    setPopupOpen(false);
+                  } else {
+                    showError();
+                  }
+                }}
+              >
+                Import
+              </button>
+            </div>
+            <Dialog.Close asChild>
+              <button
+                className="IconButton"
+                aria-label="Close"
+                onClick={() => {
+                  setPopupOpen(false);
+                }}
+              >
+                <Cross2Icon />
+              </button>
+            </Dialog.Close>
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog.Root>
+      <ToastyBoy open={showToast} setOpen={setShowToast} />
+    </div>
+  );
+}
+
+function AddBookButton({ handleAddBook, popupOpen, setPopupOpen, className }) {
   const [genre, setGenre] = useState();
   const [place, setPlace] = useState();
   const [title, setTitle] = useState();
@@ -359,10 +506,10 @@ function AddBookButton({ handleAddBook, popupOpen, setPopupOpen }) {
   };
 
   return (
-    <>
+    <div>
       <Dialog.Root open={popupOpen}>
         <button
-          className="Button floating"
+          className={`Button violet-primary ${className}`}
           onClick={() => {
             setPopupOpen(true);
           }}
@@ -494,7 +641,7 @@ function AddBookButton({ handleAddBook, popupOpen, setPopupOpen }) {
         </Dialog.Portal>
       </Dialog.Root>
       <ToastyBoy open={showToast} setOpen={setShowToast} />
-    </>
+    </div>
   );
 }
 
