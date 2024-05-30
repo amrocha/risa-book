@@ -484,7 +484,9 @@ function AddBookButton({ handleAddBook, popupOpen, setPopupOpen, className }) {
   };
 
   const handleImageOnChange = async (event) => {
+    console.log("1", event.target.files);
     if (event.target.files && event.target.files[0]) {
+      console.log("its probably this", event.target.files);
       const blob = await reducer.toBlob(event.target.files[0], {
         max: 200,
         unsharpAmount: 80,
@@ -492,16 +494,23 @@ function AddBookButton({ handleAddBook, popupOpen, setPopupOpen, className }) {
         unsharpThreshold: 2,
       });
 
+      console.log("2", { blob });
       // const blobUrl = URL.createObjectURL(blob);
       // setImage(blobUrl);
 
       let reader = new FileReader();
 
+      console.log("3");
       reader.onload = (e) => {
+        console.log("6", {
+          e,
+        });
         setImage(e.target.result);
       };
 
+      console.log("4");
       reader.readAsDataURL(blob);
+      console.log("5");
     }
   };
 
@@ -611,12 +620,12 @@ function AddBookButton({ handleAddBook, popupOpen, setPopupOpen, className }) {
               <button
                 className="Button green"
                 onClick={() => {
-                  console.log('Huh!',{
+                  console.log("Huh!", {
                     title,
                     place,
                     genre,
-                    image
-                  })
+                    image,
+                  });
                   if (title && place && genre && image) {
                     handleAddBook({ title, place, genre, image });
                     setGenre(undefined);
