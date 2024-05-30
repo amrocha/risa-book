@@ -611,6 +611,12 @@ function AddBookButton({ handleAddBook, popupOpen, setPopupOpen, className }) {
               <button
                 className="Button green"
                 onClick={() => {
+                  console.log('Huh!',{
+                    title,
+                    place,
+                    genre,
+                    image
+                  })
                   if (title && place && genre && image) {
                     handleAddBook({ title, place, genre, image });
                     setGenre(undefined);
