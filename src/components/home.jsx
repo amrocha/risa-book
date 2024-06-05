@@ -4,7 +4,7 @@ import { useLocalStorage } from "usehooks-ts";
 import * as Dialog from "@radix-ui/react-dialog";
 import * as Toast from "@radix-ui/react-toast";
 import { Cross2Icon, PlusCircledIcon } from "@radix-ui/react-icons";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import imageBlobReduce from "image-blob-reduce";
 import { debounce } from "lodash";
 import { useRouter } from "next/router";
@@ -231,17 +231,14 @@ export default function Home() {
     await navigator.clipboard.writeText(JSON.stringify(output));
   };
 
-  const index = {};
-
-  const allBooks = Object.entries(data).reduce(
-    (acc, [placeName, placeData]) => {
+  const allBooks = useMemo(() => {
+    return Object.entries(data).reduce((acc, [placeName, placeData]) => {
       return [
         ...acc,
         ...Object.entries(placeData).reduce((acc, [genreName, genreData]) => {
           return [
             ...acc,
             ...Object.entries(genreData).reduce((acc, [id, book]) => {
-
               acc.push({
                 ...book,
                 id,
@@ -252,63 +249,78 @@ export default function Home() {
           ];
         }, []),
       ];
-    },
-    []
-  );
+    }, []);
+  }, [data]);
 
-  for (const book of allBooks) {
-    let genreStack = "";
+  const index = useMemo(() => {
+    const index = {};
 
-    for (const char of book.genre || '') {
-      genreStack = `${genreStack}${char}`;
-      if (index[genreStack]) {
-        index[genreStack].push(book.id);
-      } else {
-        index[genreStack] = [book.id];
+    for (const book of allBooks) {
+      let genreStack = "";
+
+      for (const char of book.genre || "") {
+        genreStack = `${genreStack}${char}`;
+        if (index[genreStack]) {
+          index[genreStack].push(book);
+        } else {
+          index[genreStack] = [book];
+        }
+      }
+
+      let titleStack = "";
+
+      for (const char of book.title || "") {
+        titleStack = `${titleStack}${char}`;
+        if (index[titleStack]) {
+          index[titleStack].push(book);
+        } else {
+          index[titleStack] = [book];
+        }
+      }
+
+      let placeStack = "";
+
+      for (const char of book.place || "") {
+        placeStack = `${placeStack}${char}`;
+        if (index[placeStack]) {
+          index[placeStack].push(book);
+        } else {
+          index[placeStack] = [book];
+        }
+      }
+
+      let notesStack = "";
+
+      for (const char of book.notes || "") {
+        notesStack = `${notesStack}${char}`;
+        if (index[notesStack]) {
+          index[notesStack].push(book);
+        } else {
+          index[notesStack] = [book];
+        }
       }
     }
 
-    let titleStack = "";
+    return index;
+  }, [allBooks]);
 
-    for (const char of book.title || '') {
-      titleStack = `${titleStack}${char}`;
-      if (index[titleStack]) {
-        index[titleStack].push(book.id);
-      } else {
-        index[titleStack] = [book.id];
-      }
-    }
+  const includedBooks = searchQuery ? index[searchQuery] || [] : allBooks;
 
-    let placeStack = "";
+  const filteredDataSet = {};
 
-    for (const char of book.place || '') {
-      placeStack = `${placeStack}${char}`;
-      if (index[placeStack]) {
-        index[placeStack].push(book.id);
-      } else {
-        index[placeStack] = [book.id];
-      }
-    }
-
-    let notesStack = "";
-
-    for (const char of book.notes || '') {
-      notesStack = `${notesStack}${char}`;
-      if (index[notesStack]) {
-        index[notesStack].push(book.id);
-      } else {
-        index[notesStack] = [book.id];
-      }
-    }
+  for (const book of includedBooks) {
+    filteredDataSet[book.place] ||= {};
+    filteredDataSet[book.place][book.genre] ||= {};
+    filteredDataSet[book.place][book.genre][book.id] = book;
   }
 
-  const workingDataSet = searchQuery ? index[searchQuery] || [] : allBooks.map((book) => book.id);
+  const workingDataSet = searchQuery ? filteredDataSet : data;
 
-  console.log('stuff', searchQuery, workingDataSet);
+  console.log("stuff", searchQuery, includedBooks, workingDataSet);
 
   return (
     <main
-      className={`min-h-screen ${inter.className} flex flex-col items-center justify-between xl:p-24 gap-4 m-4`}
+      className={`min-h-screen ${inter.className} flex flex-col items-center xl:p-24 gap-4 m-4`}
     >
       <div className="sticky top-0 bg-slate-100 flex w-dvw -m-4 p-4 border-b mb-0">
         <input
@@ -347,7 +359,7 @@ export default function Home() {
           setPopupOpen={setImportDataPopupOpen}
         /> */}
       </div>
-      {Object.entries(data).map(([place, genres]) => {
+      {Object.entries(workingDataSet).map(([place, genres]) => {
         return (
           <div
             key={place}
@@ -366,10 +378,6 @@ export default function Home() {
                     <div className="px-4">
                       {Object.entries(books).map(
                         ([id, { title, imageKey, genre, notes, place }]) => {
-                          if (!workingDataSet.includes(id)) {
-                            return;
-                          }
-
                           return (
                             <div
                               className="flex gap-4 py-4 items-center flex-col sm:flex-row"
