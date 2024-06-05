@@ -4,7 +4,7 @@ import { useLocalStorage } from "usehooks-ts";
 import * as Dialog from "@radix-ui/react-dialog";
 import * as Toast from "@radix-ui/react-toast";
 import { Cross2Icon, PlusCircledIcon } from "@radix-ui/react-icons";
-import { useState, useRef, useEffect, useMemo } from "react";
+import { useState, useRef, useEffect } from "react";
 import imageBlobReduce from "image-blob-reduce";
 import { debounce } from "lodash";
 import { useRouter } from "next/router";
