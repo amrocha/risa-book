@@ -92,8 +92,6 @@ export default function Home() {
   const router = useRouter();
 
   useEffect(() => {
-    console.log("Calculating images");
-
     const imagesObject = Object.entries(data).reduce((acc, [place, genres]) => {
       const placeImages = Object.entries(genres).flatMap(([genre, books]) => {
         const genreImages = Object.entries(books).map(([id, book]) => {
@@ -110,29 +108,24 @@ export default function Home() {
       return acc;
     }, {});
 
-    console.log("aaa", imagesObject);
 
     Object.entries(imagesObject).forEach(([imageKey, value]) => {
       if (value) {
-        console.log("Saving in storage!", imageKey, value);
         localStorage.setItem(key, value);
       } else {
-        console.log("Retrieving from storage!", imageKey, value);
         const newValue = localStorage.getItem(imageKey);
 
         imagesObject[imageKey] = newValue;
       }
     });
 
-    console.log("bbb", imagesObject);
-
     setImages(imagesObject);
   }, [data]);
 
   const [popupOpen, setPopupOpen] = useState(false);
+  const [editPopupOpen, setEditPopupOpen] = useState(false);
   const [importDataPopupOpen, setImportDataPopupOpen] = useState(false);
-
-  console.log("images", images);
+  const [bookToEdit, setBookToEdit] = useState({});
 
   const handleChangePlace = (newPlace, oldPlace, genre, id) => {
     if (newPlace === oldPlace) {
@@ -168,11 +161,11 @@ export default function Home() {
     let uuid = self.crypto.randomUUID();
     let imageUuid = self.crypto.randomUUID();
 
-    console.log("New image! Saving in storage!", imageUuid, image);
     localStorage.setItem(imageUuid, image);
 
     const dataClone = structuredClone(data);
     const book = {
+      id: uuid,
       title,
       genre,
       place,
@@ -185,14 +178,29 @@ export default function Home() {
     setData(dataClone);
   };
 
-  const handleNotesChange = debounce((newNotes, place, genre, id) => {
-    console.log("New notes! Saving in storage!", {
-      newNotes,
-      place,
-      genre,
-      id,
-    });
+  const handleEditBook = (oldBook, newBook, newImage) => {
+    const dataClone = structuredClone(data);
 
+    if (newImage) {
+      let imageUuid = self.crypto.randomUUID();
+      newBook.imageKey = imageUuid;
+      localStorage.setItem(imageUuid, newImage);
+      localStorage.removeItem(oldBook.imageKey);
+    }
+
+    delete dataClone[oldBook.place][oldBook.genre][oldBook.id];
+    dataClone[newBook.place][newBook.genre][oldBook.id] = {
+      id: oldBook.id,
+      place: newBook.place,
+      genre: newBook.genre,
+      title: newBook.title,
+      imageKey: newBook.imageKey,
+    };
+
+    setData(dataClone);
+  };
+
+  const handleNotesChange = debounce((newNotes, place, genre, id) => {
     const dataClone = structuredClone(data);
     const book = dataClone[place][genre][id];
     book["notes"] = newNotes;
@@ -208,7 +216,6 @@ export default function Home() {
     const images = dataJson.images;
 
     for (const [key, value] of Object.entries(images)) {
-      console.log("Saving in storage!", key, value);
       localStorage.setItem(key, value);
     }
 
@@ -216,15 +223,12 @@ export default function Home() {
   };
 
   const handleExportData = async () => {
-    console.log("keys", images);
-
     const output = {
       data: data,
       images: images,
     };
 
     await navigator.clipboard.writeText(JSON.stringify(output));
-    console.log(output);
   };
 
   return (
@@ -233,6 +237,13 @@ export default function Home() {
     >
       {/* <div className="flex flex-col items-center justify-between xl:p-24 gap-4"> */}
       <div className="flex flex-col items-center w-32 gap-1">
+        <EditBookPopup
+          handleEditBook={handleEditBook}
+          popupOpen={editPopupOpen}
+          setPopupOpen={setEditPopupOpen}
+          book={bookToEdit}
+        />
+
         <AddBookButton
           handleAddBook={handleAddBook}
           popupOpen={popupOpen}
@@ -360,7 +371,20 @@ export default function Home() {
                                 </textarea>
                               </div>
                               <div className="flex flex-col gap-4 w-full sm:w-auto">
-                                <button className="Button violet cursor-pointer">
+                                <button
+                                  className="Button violet cursor-pointer"
+                                  onClick={() => {
+                                    setBookToEdit({
+                                      id,
+                                      title,
+                                      imageKey,
+                                      genre,
+                                      notes,
+                                      place,
+                                    });
+                                    setEditPopupOpen(true);
+                                  }}
+                                >
                                   編集
                                 </button>
                               </div>
@@ -467,6 +491,195 @@ function ImportDataButton({ handleImportData, popupOpen, setPopupOpen }) {
   );
 }
 
+function EditBookPopup({
+  handleEditBook,
+  book,
+  popupOpen,
+  setPopupOpen,
+  className,
+}) {
+  const [genre, setGenre] = useState(book.genre);
+  const [place, setPlace] = useState(book.place);
+  const [title, setTitle] = useState(book.title);
+  const [image, setImage] = useState(book.image);
+  const [showToast, setShowToast] = useState(false);
+  const timerRef = useRef(0);
+
+  useEffect(() => {
+    const imageBlob = localStorage.getItem(book.imageKey);
+
+    setGenre(book.genre);
+    setPlace(book.place);
+    setTitle(book.title);
+    setImage(imageBlob);
+  }, [book]);
+
+
+  const showError = () => {
+    setShowToast(true);
+    window.clearTimeout(timerRef.current);
+    timerRef.current = window.setTimeout(() => {
+      setShowToast(false);
+    }, 2000);
+  };
+
+  const handleImageOnChange = async (event) => {
+    if (event.target.files && event.target.files[0]) {
+      const blob = await reducer.toBlob(event.target.files[0], {
+        max: 200,
+        unsharpAmount: 80,
+        unsharpRadius: 0.6,
+        unsharpThreshold: 2,
+      });
+
+      let reader = new FileReader();
+
+      reader.onload = (e) => {
+        setImage(e.target.result);
+      };
+
+      reader.readAsDataURL(blob);
+    }
+  };
+
+  return (
+    <div>
+      <Dialog.Root open={popupOpen}>
+        <Dialog.Portal>
+          <Dialog.Overlay className="DialogOverlay" />
+          <Dialog.Content className="DialogContent">
+            <Dialog.Title className="DialogTitle">
+              <h3 className="text-2xl">本の編集</h3>
+            </Dialog.Title>
+            <fieldset className="Fieldset">
+              <label className="Label" htmlFor="title">
+                タイトル
+              </label>
+              <input
+                className="Input"
+                id="title"
+                placeholder="タイトル"
+                value={title}
+                onChange={(event) => {
+                  setTitle(event.target.value);
+                }}
+              />
+            </fieldset>
+            <fieldset className="Fieldset">
+              <label className="Label" htmlFor="genre-form">
+                ジャンル
+              </label>
+              <select
+                className="Input"
+                id="genre-form"
+                name="ジャンル"
+                value={genre}
+                onChange={(event) => {
+                  setGenre(event.target.value);
+                }}
+              >
+                <option key={"default"}>選択</option>
+                {allGenres.map((genre) => {
+                  return (
+                    <option key={genre} value={genre}>
+                      {genre}
+                    </option>
+                  );
+                })}
+              </select>
+            </fieldset>
+            <fieldset className="Fieldset">
+              <label className="Label" htmlFor="place-form">
+                場所
+              </label>
+              <select
+                className="Input"
+                id="place-form"
+                name="場所"
+                value={place}
+                onChange={(event) => {
+                  setPlace(event.target.value);
+                }}
+              >
+                <option key={"default"}>選択</option>
+                {allPlaces.map((place) => {
+                  return (
+                    <option key={place} value={place}>
+                      {place}
+                    </option>
+                  );
+                })}
+              </select>
+            </fieldset>
+            <fieldset className="Fieldset">
+              <label className="Label" htmlFor="image-form">
+                イメージ
+              </label>
+              <input
+                type="file"
+                id="image-form"
+                className="Input InputFile"
+                onChange={handleImageOnChange}
+              />
+            </fieldset>
+            {image && (
+              <div className="flex justify-center">
+                <Image
+                  src={image}
+                  width={100}
+                  height={200}
+                  alt="Image preview"
+                />
+              </div>
+            )}
+            <div
+              style={{
+                display: "flex",
+                marginTop: 25,
+                justifyContent: "flex-end",
+              }}
+            >
+              <button
+                className="Button green"
+                onClick={() => {
+                  if (title && place && genre && image) {
+                    handleEditBook(
+                      book,
+                      { id: book.id, title, place, genre },
+                      image
+                    );
+                    setGenre(undefined);
+                    setPlace(undefined);
+                    setTitle(undefined);
+                    setImage(undefined);
+                    setPopupOpen(false);
+                  } else {
+                    showError();
+                  }
+                }}
+              >
+                編集
+              </button>
+            </div>
+            <Dialog.Close asChild>
+              <button
+                className="IconButton"
+                aria-label="Close"
+                onClick={() => {
+                  setPopupOpen(false);
+                }}
+              >
+                <Cross2Icon />
+              </button>
+            </Dialog.Close>
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog.Root>
+      <ToastyBoy open={showToast} setOpen={setShowToast} />
+    </div>
+  );
+}
+
 function AddBookButton({ handleAddBook, popupOpen, setPopupOpen, className }) {
   const [genre, setGenre] = useState();
   const [place, setPlace] = useState();
@@ -484,9 +697,7 @@ function AddBookButton({ handleAddBook, popupOpen, setPopupOpen, className }) {
   };
 
   const handleImageOnChange = async (event) => {
-    console.log("1", event.target.files);
     if (event.target.files && event.target.files[0]) {
-      console.log("its probably this", event.target.files);
       const blob = await reducer.toBlob(event.target.files[0], {
         max: 200,
         unsharpAmount: 80,
@@ -494,23 +705,13 @@ function AddBookButton({ handleAddBook, popupOpen, setPopupOpen, className }) {
         unsharpThreshold: 2,
       });
 
-      console.log("2", { blob });
-      // const blobUrl = URL.createObjectURL(blob);
-      // setImage(blobUrl);
-
       let reader = new FileReader();
 
-      console.log("3");
       reader.onload = (e) => {
-        console.log("6", {
-          e,
-        });
         setImage(e.target.result);
       };
 
-      console.log("4");
       reader.readAsDataURL(blob);
-      console.log("5");
     }
   };
 
@@ -620,12 +821,6 @@ function AddBookButton({ handleAddBook, popupOpen, setPopupOpen, className }) {
               <button
                 className="Button green"
                 onClick={() => {
-                  console.log("Huh!", {
-                    title,
-                    place,
-                    genre,
-                    image,
-                  });
                   if (title && place && genre && image) {
                     handleAddBook({ title, place, genre, image });
                     setGenre(undefined);
