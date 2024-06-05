@@ -354,7 +354,7 @@ export default function Home() {
                               <div className="flex flex-col w-full sm:w-auto">
                                 <textarea
                                   name="notes"
-                                  rows="5"
+                                  rows="2"
                                   cols="33"
                                   className="p-2"
                                   onChange={(event) => {
