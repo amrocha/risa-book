@@ -124,6 +124,7 @@ export default function Home() {
   const [popupOpen, setPopupOpen] = useState(false);
   const [editPopupOpen, setEditPopupOpen] = useState(false);
   const [importDataPopupOpen, setImportDataPopupOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState();
   const [bookToEdit, setBookToEdit] = useState({});
 
   const handleChangePlace = (newPlace, oldPlace, genre, id) => {
@@ -230,11 +231,96 @@ export default function Home() {
     await navigator.clipboard.writeText(JSON.stringify(output));
   };
 
+  const index = {};
+
+  const allBooks = Object.entries(data).reduce(
+    (acc, [placeName, placeData]) => {
+      return [
+        ...acc,
+        ...Object.entries(placeData).reduce((acc, [genreName, genreData]) => {
+          return [
+            ...acc,
+            ...Object.entries(genreData).reduce((acc, [id, book]) => {
+
+              acc.push({
+                ...book,
+                id,
+              });
+
+              return acc;
+            }, []),
+          ];
+        }, []),
+      ];
+    },
+    []
+  );
+
+  for (const book of allBooks) {
+    let genreStack = "";
+
+    for (const char of book.genre || '') {
+      genreStack = `${genreStack}${char}`;
+      if (index[genreStack]) {
+        index[genreStack].push(book.id);
+      } else {
+        index[genreStack] = [book.id];
+      }
+    }
+
+    let titleStack = "";
+
+    for (const char of book.title || '') {
+      titleStack = `${titleStack}${char}`;
+      if (index[titleStack]) {
+        index[titleStack].push(book.id);
+      } else {
+        index[titleStack] = [book.id];
+      }
+    }
+
+    let placeStack = "";
+
+    for (const char of book.place || '') {
+      placeStack = `${placeStack}${char}`;
+      if (index[placeStack]) {
+        index[placeStack].push(book.id);
+      } else {
+        index[placeStack] = [book.id];
+      }
+    }
+
+    let notesStack = "";
+
+    for (const char of book.notes || '') {
+      notesStack = `${notesStack}${char}`;
+      if (index[notesStack]) {
+        index[notesStack].push(book.id);
+      } else {
+        index[notesStack] = [book.id];
+      }
+    }
+  }
+
+  const workingDataSet = searchQuery ? index[searchQuery] || [] : allBooks.map((book) => book.id);
+
+  console.log('stuff', searchQuery, workingDataSet);
+
   return (
     <main
       className={`min-h-screen ${inter.className} flex flex-col items-center justify-between xl:p-24 gap-4 m-4`}
     >
-      {/* <div className="flex flex-col items-center justify-between xl:p-24 gap-4"> */}
+      <div className="sticky top-0 bg-slate-100 flex w-dvw -m-4 p-4 border-b mb-0">
+        <input
+          className="Input"
+          id="search"
+          placeholder="検索"
+          value={searchQuery}
+          onChange={(event) => {
+            setSearchQuery(event.target.value);
+          }}
+        />
+      </div>
       <div className="flex flex-col items-center w-32 gap-1">
         <EditBookPopup
           handleEditBook={handleEditBook}
@@ -248,7 +334,7 @@ export default function Home() {
           popupOpen={popupOpen}
           setPopupOpen={setPopupOpen}
         />
-        <button
+        {/* <button
           className={`Button violet-primary flex-auto`}
           onMouseDown={handleExportData}
         >
@@ -259,7 +345,7 @@ export default function Home() {
           handleImportData={handleImportData}
           popupOpen={importDataPopupOpen}
           setPopupOpen={setImportDataPopupOpen}
-        />
+        /> */}
       </div>
       {Object.entries(data).map(([place, genres]) => {
         return (
@@ -280,6 +366,10 @@ export default function Home() {
                     <div className="px-4">
                       {Object.entries(books).map(
                         ([id, { title, imageKey, genre, notes, place }]) => {
+                          if (!workingDataSet.includes(id)) {
+                            return;
+                          }
+
                           return (
                             <div
                               className="flex gap-4 py-4 items-center flex-col sm:flex-row"
