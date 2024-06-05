@@ -108,7 +108,6 @@ export default function Home() {
       return acc;
     }, {});
 
-
     Object.entries(imagesObject).forEach(([imageKey, value]) => {
       if (value) {
         localStorage.setItem(key, value);
@@ -514,7 +513,6 @@ function EditBookPopup({
     setImage(imageBlob);
   }, [book]);
 
-
   const showError = () => {
     setShowToast(true);
     window.clearTimeout(timerRef.current);
@@ -638,7 +636,16 @@ function EditBookPopup({
                 marginTop: 25,
                 justifyContent: "flex-end",
               }}
+              className="gap-4"
             >
+              <button
+                className="Button"
+                onClick={() => {
+                  setPopupOpen(false);
+                }}
+              >
+                キャンセル
+              </button>
               <button
                 className="Button green"
                 onClick={() => {
@@ -817,7 +824,16 @@ function AddBookButton({ handleAddBook, popupOpen, setPopupOpen, className }) {
                 marginTop: 25,
                 justifyContent: "flex-end",
               }}
+              className="gap-4"
             >
+              <button
+                className="Button"
+                onClick={() => {
+                  setPopupOpen(false);
+                }}
+              >
+                キャンセル
+              </button>
               <button
                 className="Button green"
                 onClick={() => {
