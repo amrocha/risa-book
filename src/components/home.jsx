@@ -256,36 +256,56 @@ export default function Home() {
     const index = {};
 
     for (const book of allBooks) {
-      let genreStack = "";
+      let genreStrings = [];
 
       for (const char of book.genre || "") {
-        genreStack = `${genreStack}${char}`;
-        if (index[genreStack]) {
-          index[genreStack].push(book);
-        } else {
-          index[genreStack] = [book];
+        genreStrings = genreStrings.map((indexString) => {
+          return `${indexString}${char}`;
+        });
+        genreStrings.push(char);
+
+        for (const indexString of genreStrings) {
+          if (index[indexString]) {
+            index[indexString].push(book);
+          } else {
+            index[indexString] = [book];
+          }
         }
       }
 
-      let titleStack = "";
+      let titleStrings = [];
 
       for (const char of book.title || "") {
-        titleStack = `${titleStack}${char}`;
-        if (index[titleStack]) {
-          index[titleStack].push(book);
-        } else {
-          index[titleStack] = [book];
+        titleStrings = titleStrings.map((indexString) => {
+          return `${indexString}${char}`;
+        });
+
+        titleStrings.push(char);
+
+        for (const indexString of titleStrings) {
+          if (index[indexString]) {
+            index[indexString].push(book);
+          } else {
+            index[indexString] = [book];
+          }
         }
       }
 
-      let placeStack = "";
+      let placeStrings = [];
 
       for (const char of book.place || "") {
-        placeStack = `${placeStack}${char}`;
-        if (index[placeStack]) {
-          index[placeStack].push(book);
-        } else {
-          index[placeStack] = [book];
+        placeStrings = placeStrings.map((indexString) => {
+          return `${indexString}${char}`;
+        });
+
+        placeStrings.push(char);
+
+        for (const indexString of placeStrings) {
+          if (index[indexString]) {
+            index[indexString].push(book);
+          } else {
+            index[indexString] = [book];
+          }
         }
       }
 
@@ -316,7 +336,7 @@ export default function Home() {
 
   const workingDataSet = searchQuery ? filteredDataSet : data;
 
-  console.log("stuff", searchQuery, includedBooks, workingDataSet);
+  console.log("stuff", searchQuery, includedBooks, workingDataSet, index);
 
   return (
     <main
