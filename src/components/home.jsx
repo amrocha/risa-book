@@ -250,7 +250,7 @@ export default function Home() {
         />
         <button
           className={`Button violet-primary flex-auto`}
-          onClick={handleExportData}
+          onMouseDown={handleExportData}
         >
           Export Data
         </button>
@@ -372,7 +372,7 @@ export default function Home() {
                               <div className="flex flex-col gap-4 w-full sm:w-auto">
                                 <button
                                   className="Button violet cursor-pointer"
-                                  onClick={() => {
+                                  onMouseDown={() => {
                                     setBookToEdit({
                                       id,
                                       title,
@@ -425,7 +425,7 @@ function ImportDataButton({ handleImportData, popupOpen, setPopupOpen }) {
       <Dialog.Root open={popupOpen}>
         <button
           className={`Button violet-primary flex-auto`}
-          onClick={() => {
+          onMouseDown={() => {
             setPopupOpen(true);
           }}
         >
@@ -458,7 +458,7 @@ function ImportDataButton({ handleImportData, popupOpen, setPopupOpen }) {
             >
               <button
                 className="Button green"
-                onClick={() => {
+                onMouseDown={() => {
                   if (data) {
                     handleImportData(data);
                     setData(undefined);
@@ -475,7 +475,7 @@ function ImportDataButton({ handleImportData, popupOpen, setPopupOpen }) {
               <button
                 className="IconButton"
                 aria-label="Close"
-                onClick={() => {
+                onMouseDown={() => {
                   setPopupOpen(false);
                 }}
               >
@@ -640,7 +640,7 @@ function EditBookPopup({
             >
               <button
                 className="Button"
-                onClick={() => {
+                onMouseDown={() => {
                   setPopupOpen(false);
                 }}
               >
@@ -648,7 +648,7 @@ function EditBookPopup({
               </button>
               <button
                 className="Button green"
-                onClick={() => {
+                onMouseDown={() => {
                   if (title && place && genre && image) {
                     handleEditBook(
                       book,
@@ -672,7 +672,7 @@ function EditBookPopup({
               <button
                 className="IconButton"
                 aria-label="Close"
-                onClick={() => {
+                onMouseDown={() => {
                   setPopupOpen(false);
                 }}
               >
@@ -727,7 +727,7 @@ function AddBookButton({ handleAddBook, popupOpen, setPopupOpen, className }) {
       <Dialog.Root open={popupOpen}>
         <button
           className={`Button violet-primary ${className}`}
-          onClick={() => {
+          onMouseDown={() => {
             setPopupOpen(true);
           }}
         >
@@ -828,7 +828,7 @@ function AddBookButton({ handleAddBook, popupOpen, setPopupOpen, className }) {
             >
               <button
                 className="Button"
-                onClick={() => {
+                onMouseDown={() => {
                   setPopupOpen(false);
                 }}
               >
@@ -836,7 +836,7 @@ function AddBookButton({ handleAddBook, popupOpen, setPopupOpen, className }) {
               </button>
               <button
                 className="Button green"
-                onClick={() => {
+                onMouseDown={() => {
                   if (title && place && genre && image) {
                     handleAddBook({ title, place, genre, image });
                     setGenre(undefined);
@@ -856,7 +856,7 @@ function AddBookButton({ handleAddBook, popupOpen, setPopupOpen, className }) {
               <button
                 className="IconButton"
                 aria-label="Close"
-                onClick={() => {
+                onMouseDown={() => {
                   setPopupOpen(false);
                 }}
               >
